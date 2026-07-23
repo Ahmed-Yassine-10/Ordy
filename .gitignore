@@ -1,0 +1,57 @@
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+.venv/
+venv/
+.env
+.env.*
+!.env.example
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+htmlcov/
+.coverage
+dist/
+build/
+
+# ---- Node / TypeScript ----
+node_modules/
+.next/
+out/
+.turbo/
+*.tsbuildinfo
+.pnpm-store/
+coverage/
+.eslintcache
+
+# ---- Env & secrets ----
+*.local
+secrets/
+*.pem
+*.key
+!**/*.example
+
+# ---- Infra / data ----
+.terraform/
+*.tfstate
+*.tfstate.*
+volumes/
+pgdata/
+minio-data/
+*.log
+
+# ---- OS / editor ----
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.shared.json
+*.swp
+
+# ---- OneDrive noise ----
+*.tmp
+~$*
