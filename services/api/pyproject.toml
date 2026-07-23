@@ -6,6 +6,7 @@ requires-python = ">=3.12"
 dependencies = [
     "ordy-core",
     "ordy-security",
+    "ordy-ingest[crawl]",       # pipeline + inline-dev fetching (httpx)
     "fastapi>=0.115",
     "uvicorn[standard]>=0.30",
     "pydantic>=2.7",
@@ -14,8 +15,14 @@ dependencies = [
     "asyncpg>=0.29",
     "alembic>=1.13",
     "psycopg[binary]>=3.2",     # sync driver for Alembic migrations
+    "celery[redis]>=5.4",       # enqueue ingestion runs to the worker
     "python-multipart>=0.0.9",
 ]
+
+[tool.uv.sources]
+ordy-core = { workspace = true }
+ordy-security = { workspace = true }
+ordy-ingest = { workspace = true }
 
 [build-system]
 requires = ["hatchling"]

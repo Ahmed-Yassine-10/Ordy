@@ -66,6 +66,44 @@ export interface Restaurant {
   role: string;
 }
 
+export interface Source {
+  id: string;
+  kind: string;
+  config: Record<string, unknown>;
+  status: string;
+}
+
+export interface Run {
+  id: string;
+  source_id: string;
+  status: string;
+  stats: Record<string, unknown>;
+  error: Record<string, unknown> | null;
+}
+
+export interface DraftItem {
+  name: string;
+  category: string | null;
+  price_minor: number | null;
+  currency: string;
+  variants: { name: string; price_minor: number }[];
+  needs_review: boolean;
+}
+
+export interface ReviewData {
+  run: Run;
+  menu_draft: { items: DraftItem[]; coverage: Record<string, unknown>; stats: Record<string, unknown> } | null;
+  capability_map: { capabilities: { action: string; adapter: string; feasible: boolean }[] } | null;
+  warnings: string[];
+}
+
+export interface PublishResult {
+  published_products: number;
+  published_categories: number;
+  capability_map_activated: boolean;
+  run_status: string;
+}
+
 export const api = {
   login: (email: string, password: string) =>
     request<TokenResponse>("/auth/login", {
@@ -82,5 +120,25 @@ export const api = {
     request<Restaurant>("/restaurants", {
       method: "POST",
       body: JSON.stringify({ name }),
+    }),
+
+  // --- ingestion (Phase 3) ---
+  createSource: (rid: string, kind: string, url: string) =>
+    request<Source>(`/restaurants/${rid}/sources`, {
+      method: "POST",
+      body: JSON.stringify({ kind, config: { url } }),
+    }),
+  triggerRun: (rid: string, sourceId: string) =>
+    request<Run>(`/restaurants/${rid}/sources/${sourceId}/runs`, { method: "POST" }),
+  getReview: (rid: string, runId: string) =>
+    request<ReviewData>(`/restaurants/${rid}/runs/${runId}/review`),
+  submitReview: (rid: string, runId: string, exclude: string[]) =>
+    request<PublishResult>(`/restaurants/${rid}/runs/${runId}/review`, {
+      method: "POST",
+      body: JSON.stringify({
+        approve_menu: true,
+        approve_capability_map: true,
+        overrides: Object.fromEntries(exclude.map((name) => [name, { exclude: true }])),
+      }),
     }),
 };

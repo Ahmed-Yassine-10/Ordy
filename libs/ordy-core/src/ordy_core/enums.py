@@ -55,3 +55,76 @@ class RiskLevel(StrEnum):
     READ = "read"
     WRITE = "write"
     FINANCIAL = "financial"
+
+
+# ---- Ingestion (doc 04 / doc 06 §3.5) ----
+
+
+class SourceKind(StrEnum):
+    WEBSITE = "website"
+    DATABASE = "database"
+    GITHUB = "github"
+    API_DOC = "api_doc"
+    UPLOAD = "upload"
+
+
+class SourceStatus(StrEnum):
+    ACTIVE = "active"
+    PAUSED = "paused"
+    BROKEN = "broken"
+
+
+class IngestionTrigger(StrEnum):
+    ONBOARDING = "onboarding"
+    MANUAL = "manual"
+    SCHEDULED = "scheduled"
+    CHANGE_DETECTED = "change_detected"
+
+
+class RunStatus(StrEnum):
+    QUEUED = "queued"
+    DISCOVERING = "discovering"
+    FETCHING = "fetching"
+    EXTRACTING = "extracting"
+    ANALYZING = "analyzing"
+    SYNTHESIZING = "synthesizing"
+    AWAITING_REVIEW = "awaiting_review"
+    PUBLISHING = "publishing"
+    PUBLISHED = "published"
+    FAILED = "failed"
+    REJECTED = "rejected"
+
+    @property
+    def is_terminal(self) -> bool:
+        return self in {RunStatus.PUBLISHED, RunStatus.FAILED, RunStatus.REJECTED}
+
+
+class DocType(StrEnum):
+    MENU = "menu"
+    HOURS = "hours"
+    POLICY = "policy"
+    FAQ = "faq"
+    PAGE = "page"
+    PROMO = "promo"
+    CODE_SUMMARY = "code_summary"
+
+
+class DocStatus(StrEnum):
+    DRAFT = "draft"
+    APPROVED = "approved"
+    ARCHIVED = "archived"
+    SUPERSEDED = "superseded"
+
+
+class MapStatus(StrEnum):
+    DRAFT = "draft"
+    APPROVED = "approved"
+    ACTIVE = "active"
+    SUPERSEDED = "superseded"
+
+
+class AdapterKind(StrEnum):
+    NATIVE = "native"
+    REST = "rest"
+    POS = "pos"
+    BROWSER = "browser"

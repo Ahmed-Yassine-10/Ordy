@@ -18,6 +18,11 @@ class Settings(BaseSettings):
 
     redis_url: str = "redis://localhost:6379/0"
 
+    # Ingestion (Phase 3). Inline runs the pipeline in-process (dev, no broker needed);
+    # otherwise runs are enqueued to the Celery worker.
+    ingest_inline: bool = True
+    storage_local_dir: str = "./volumes/objects"
+
     jwt_secret: str = "dev-only-change-me"
     jwt_access_ttl_seconds: int = 900
     jwt_refresh_ttl_seconds: int = 2_592_000

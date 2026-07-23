@@ -4,7 +4,7 @@
 
 Ordy is an API-first, autonomous AI voice agent platform for restaurants. Customers hold natural voice conversations — in English, French, or Tunisian Derja — to order food, book tables, check availability, and get answers. Restaurants connect their website, database, POS, API, or repository; Ordy learns their menu, hours, and policies, then acts on their systems through a secure, audited tool-execution layer.
 
-> **Status: Phase 2 — Dashboard foundation (in progress).** Phase 1 (architecture) is complete under [docs/](docs/). Phase 2 has begun: the monorepo, the dev stack, `ordy-core`/`ordy-security` libraries, the FastAPI service (auth + restaurants + menu) with **PostgreSQL Row-Level Security enforced from the first migration**, and a Next.js dashboard shell are now scaffolded. See [docs/PHASE-2.md](docs/PHASE-2.md) for what's built and how to run it.
+> **Status: Phase 3 — Ingestion pipeline (in progress).** Phase 1 (architecture) is complete under [docs/](docs/). Phase 2 delivered auth, tenancy, and menu on **PostgreSQL Row-Level Security from the first migration** ([docs/PHASE-2.md](docs/PHASE-2.md)). Phase 3 adds the restaurant-intelligence pipeline — `ordy-ingest` (JSON-LD menu extraction, OpenAPI capability analysis, synthesis, change-detection), Celery workers, and a knowledge API + onboarding UI where a URL becomes a reviewed menu draft and capability map, published only on human approval ([docs/PHASE-3.md](docs/PHASE-3.md)).
 
 ## The one rule that shapes everything
 

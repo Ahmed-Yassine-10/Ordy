@@ -62,6 +62,7 @@ services:
       DATABASE_MIGRATION_URL: postgresql+psycopg://ordy_migrator:ordy_migrator_pw@postgres:5432/ordy
       REDIS_URL: redis://redis:6379/0
       S3_ENDPOINT_URL: http://minio:9000
+      INGEST_INLINE: "false"          # enqueue to the worker (full realistic path)
     ports: ["8000:8000"]
     depends_on:
       postgres: { condition: service_healthy }
@@ -71,7 +72,37 @@ services:
       - ../../libs:/app/libs
     command: ["uvicorn", "ordy_api.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
 
+  worker:
+    build:
+      context: ../..
+      dockerfile: infra/docker/worker.Dockerfile
+    env_file: ../../.env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://ordy_app:ordy_app_pw@postgres:5432/ordy
+      REDIS_URL: redis://redis:6379/0
+      STORAGE_BACKEND: local
+      STORAGE_LOCAL_DIR: /app/volumes/objects
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    volumes:
+      - ../../services/workers/src:/app/services/workers/src
+      - ../../libs:/app/libs
+      - objects:/app/volumes/objects
+
+  beat:
+    build:
+      context: ../..
+      dockerfile: infra/docker/worker.Dockerfile
+    env_file: ../../.env
+    environment:
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      redis: { condition: service_healthy }
+    command: ["celery", "-A", "ordy_workers.celery_app.celery_app", "beat", "--loglevel=INFO"]
+
 volumes:
+  objects:
   pgdata:
   redisdata:
   miniodata:

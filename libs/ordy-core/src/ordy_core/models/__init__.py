@@ -8,6 +8,12 @@ from ordy_core.models.identity import (
     RestaurantMember,
     User,
 )
+from ordy_core.models.knowledge import (
+    CapabilityMap,
+    IngestionRun,
+    KnowledgeDocument,
+    KnowledgeSource,
+)
 from ordy_core.models.menu import (
     MenuCategory,
     Menu,
@@ -19,6 +25,10 @@ from ordy_core.models.menu import (
 
 __all__ = [
     "ApiKey",
+    "CapabilityMap",
+    "IngestionRun",
+    "KnowledgeDocument",
+    "KnowledgeSource",
     "Menu",
     "MenuCategory",
     "Modifier",
