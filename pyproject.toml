@@ -1,0 +1,48 @@
+# Ordy — uv workspace root. Members each carry their own pyproject.toml.
+[project]
+name = "ordy"
+version = "0.0.0"
+description = "Ordy — the AI waiter that understands, talks, and takes action."
+requires-python = ">=3.12"
+
+[tool.uv.workspace]
+members = ["libs/ordy-core", "libs/ordy-security", "services/api"]
+
+[tool.uv.sources]
+ordy-core = { workspace = true }
+ordy-security = { workspace = true }
+
+[dependency-groups]
+dev = [
+    "ruff>=0.6",
+    "mypy>=1.11",
+    "pytest>=8",
+    "pytest-asyncio>=0.23",
+    "httpx>=0.27",
+]
+
+# ---- shared tooling config ----
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+src = ["libs/ordy-core/src", "libs/ordy-security/src", "services/api/src"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "S", "ASYNC", "C4"]
+# S101 (assert) allowed in tests only; configured per-file below.
+ignore = ["B008"]  # FastAPI Depends() in defaults is idiomatic.
+
+[tool.ruff.lint.per-file-ignores]
+"**/tests/**" = ["S101"]
+"**/alembic/**" = ["E501", "F401"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+plugins = ["pydantic.mypy"]
+mypy_path = ["libs/ordy-core/src", "libs/ordy-security/src"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["libs", "services"]

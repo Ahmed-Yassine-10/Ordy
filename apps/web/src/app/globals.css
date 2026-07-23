@@ -1,0 +1,11 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light dark;
+}
+
+body {
+  @apply bg-white text-ordy-ink antialiased dark:bg-ordy-ink dark:text-zinc-100;
+}
