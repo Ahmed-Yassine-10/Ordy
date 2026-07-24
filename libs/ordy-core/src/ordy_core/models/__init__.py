@@ -20,6 +20,10 @@ from ordy_core.models.knowledge import (
     KnowledgeDocument,
     KnowledgeSource,
 )
+from ordy_core.models.automation import (
+    AutomationRun,
+    AutomationWorkflow,
+)
 from ordy_core.models.orders import (
     Customer,
     DeliveryZoneRow,
@@ -49,6 +53,8 @@ from ordy_core.models.menu import (
 __all__ = [
     "ActionExecution",
     "AgentConfig",
+    "AutomationRun",
+    "AutomationWorkflow",
     "ApiKey",
     "Customer",
     "DeliveryZoneRow",

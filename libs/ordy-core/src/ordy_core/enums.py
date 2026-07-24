@@ -193,3 +193,14 @@ class ActionStatus(StrEnum):
     FAILED = "failed"
     COMPENSATING = "compensating"
     COMPENSATED = "compensated"
+
+
+class WorkflowStatus(StrEnum):
+    """Browser-workflow lifecycle (doc 04 §6). Only verified/active may run live."""
+
+    DRAFT = "draft"
+    VERIFYING = "verifying"
+    VERIFIED = "verified"
+    ACTIVE = "active"
+    DEGRADED = "degraded"
+    DISABLED = "disabled"

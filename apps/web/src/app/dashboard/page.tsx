@@ -62,6 +62,12 @@ export default function DashboardPage() {
             Tools
           </a>
           <a
+            href="/dashboard/workflows"
+            className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-900"
+          >
+            Automation
+          </a>
+          <a
             href="/dashboard/operations"
             className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-900"
           >

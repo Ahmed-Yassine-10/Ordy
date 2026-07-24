@@ -176,6 +176,15 @@ export const api = {
       body: JSON.stringify({ status }),
     }),
 
+  // --- browser workflows (Phase 8) ---
+  listWorkflows: (rid: string) => request<Workflow[]>(`/restaurants/${rid}/workflows`),
+  verifyWorkflow: (rid: string, id: string) =>
+    request<{ id: string; status: string }>(`/restaurants/${rid}/workflows/${id}/verify`, { method: "POST" }),
+  approveWorkflow: (rid: string, id: string) =>
+    request<Workflow>(`/restaurants/${rid}/workflows/${id}/approve`, { method: "POST" }),
+  disableWorkflow: (rid: string, id: string) =>
+    request<Workflow>(`/restaurants/${rid}/workflows/${id}/disable`, { method: "POST" }),
+
   // --- tools / action gate (Phase 6) ---
   listTools: (rid: string) => request<Tool[]>(`/restaurants/${rid}/tools`),
   updateTool: (rid: string, key: string, patch: Partial<Pick<Tool, "enabled" | "caps">>) =>
@@ -227,4 +236,15 @@ export interface OrderRow {
   created_at: string;
   next_states: string[];
   items: { name: string; quantity: number; total_minor: number }[];
+}
+
+export interface Workflow {
+  id: string;
+  action_key: string;
+  target_domain: string;
+  version: number;
+  status: string;
+  failure_count: number;
+  last_verified_at: string | null;
+  step_count: number;
 }
