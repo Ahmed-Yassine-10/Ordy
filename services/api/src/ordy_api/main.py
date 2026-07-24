@@ -12,7 +12,7 @@ from ordy_core.errors import OrdyError
 
 from ordy_api.config import get_settings
 from ordy_api.middleware import RequestIdMiddleware
-from ordy_api.modules import auth, health, knowledge, menu, restaurants
+from ordy_api.modules import agent, auth, health, knowledge, menu, restaurants
 from ordy_api.problems import ordy_error_handler, unhandled_error_handler
 
 
@@ -52,6 +52,7 @@ def create_app() -> FastAPI:
     app.include_router(restaurants.router, prefix="/v1")
     app.include_router(menu.router, prefix="/v1")
     app.include_router(knowledge.router, prefix="/v1")
+    app.include_router(agent.router, prefix="/v1")
 
     return app
 

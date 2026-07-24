@@ -157,4 +157,31 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ query, k }),
     }),
+
+  // --- agent sandbox (Phase 5) ---
+  startSandbox: (rid: string) =>
+    request<SandboxRef>(`/restaurants/${rid}/sandbox/conversations`, { method: "POST" }),
+  sandboxTurn: (rid: string, cid: string, text: string) =>
+    request<TurnResponse>(`/restaurants/${rid}/sandbox/conversations/${cid}/turns`, {
+      method: "POST",
+      body: JSON.stringify({ text }),
+    }),
 };
+
+export interface SandboxRef {
+  conversation_id: string;
+  language: string;
+}
+
+export interface AgentTrace {
+  route: string;
+  intent?: string;
+  grounding?: { grounded: boolean; unsupported: string[] };
+  retrieved?: { chunk_id: string; score: number; source?: string }[];
+}
+
+export interface TurnResponse {
+  reply: string;
+  trace: AgentTrace;
+  status: string;
+}

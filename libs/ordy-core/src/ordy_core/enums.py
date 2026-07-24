@@ -128,3 +128,30 @@ class AdapterKind(StrEnum):
     REST = "rest"
     POS = "pos"
     BROWSER = "browser"
+
+
+# ---- Conversations (doc 06 §3.4) ----
+
+
+class Channel(StrEnum):
+    VOICE_WEB = "voice_web"
+    VOICE_PHONE = "voice_phone"
+    TEXT_WIDGET = "text_widget"
+    SANDBOX = "sandbox"
+    DASHBOARD = "dashboard"
+    API = "api"
+
+
+class ConversationStatus(StrEnum):
+    ACTIVE = "active"
+    COMPLETED = "completed"
+    ABANDONED = "abandoned"
+    ESCALATED = "escalated"
+    FAILED = "failed"
+
+
+class TurnRole(StrEnum):
+    CUSTOMER = "customer"
+    AGENT = "agent"
+    SYSTEM = "system"
+    TOOL = "tool"

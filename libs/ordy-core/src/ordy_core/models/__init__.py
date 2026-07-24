@@ -8,6 +8,11 @@ from ordy_core.models.identity import (
     RestaurantMember,
     User,
 )
+from ordy_core.models.conversation import (
+    AgentConfig,
+    Conversation,
+    ConversationTurn,
+)
 from ordy_core.models.knowledge import (
     CapabilityMap,
     IngestionRun,
@@ -25,8 +30,11 @@ from ordy_core.models.menu import (
 )
 
 __all__ = [
+    "AgentConfig",
     "ApiKey",
     "CapabilityMap",
+    "Conversation",
+    "ConversationTurn",
     "IngestionRun",
     "KnowledgeChunk",
     "KnowledgeDocument",

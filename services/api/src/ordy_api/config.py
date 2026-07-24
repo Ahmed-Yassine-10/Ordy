@@ -28,6 +28,10 @@ class Settings(BaseSettings):
     embedding_backend: str = "hashing"
     embedding_dim: int = 1536
 
+    # Agent (Phase 5). 'rule' is the deterministic dev brain (no provider); 'llm' uses
+    # the model router. Read-only Q&A in Phase 5; tool calling in Phase 6.
+    agent_brain: str = "rule"
+
     jwt_secret: str = "dev-only-change-me"
     jwt_access_ttl_seconds: int = 900
     jwt_refresh_ttl_seconds: int = 2_592_000
