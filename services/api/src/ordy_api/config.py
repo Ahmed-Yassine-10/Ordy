@@ -23,6 +23,11 @@ class Settings(BaseSettings):
     ingest_inline: bool = True
     storage_local_dir: str = "./volumes/objects"
 
+    # Retrieval (Phase 4). 'hashing' is a deterministic dev embedder (no provider);
+    # 'openai' uses the model router's EMBEDDING tier. Dim must match the DB column.
+    embedding_backend: str = "hashing"
+    embedding_dim: int = 1536
+
     jwt_secret: str = "dev-only-change-me"
     jwt_access_ttl_seconds: int = 900
     jwt_refresh_ttl_seconds: int = 2_592_000

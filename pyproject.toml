@@ -6,12 +6,13 @@ description = "Ordy — the AI waiter that understands, talks, and takes action.
 requires-python = ">=3.12"
 
 [tool.uv.workspace]
-members = ["libs/ordy-core", "libs/ordy-security", "libs/ordy-ingest", "services/api", "services/workers"]
+members = ["libs/ordy-core", "libs/ordy-security", "libs/ordy-ingest", "libs/ordy-rag", "services/api", "services/workers"]
 
 [tool.uv.sources]
 ordy-core = { workspace = true }
 ordy-security = { workspace = true }
 ordy-ingest = { workspace = true }
+ordy-rag = { workspace = true }
 
 [dependency-groups]
 dev = [
@@ -30,6 +31,7 @@ src = [
     "libs/ordy-core/src",
     "libs/ordy-security/src",
     "libs/ordy-ingest/src",
+    "libs/ordy-rag/src",
     "services/api/src",
     "services/workers/src",
 ]

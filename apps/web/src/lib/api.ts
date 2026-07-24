@@ -104,6 +104,15 @@ export interface PublishResult {
   run_status: string;
 }
 
+export interface SearchHit {
+  chunk_id: string;
+  content: string;
+  score: number;
+  document_id: string | null;
+  provenance: { source_url?: string; doc_type?: string };
+  language: string | null;
+}
+
 export const api = {
   login: (email: string, password: string) =>
     request<TokenResponse>("/auth/login", {
@@ -140,5 +149,12 @@ export const api = {
         approve_capability_map: true,
         overrides: Object.fromEntries(exclude.map((name) => [name, { exclude: true }])),
       }),
+    }),
+
+  // --- retrieval (Phase 4) ---
+  searchKnowledge: (rid: string, query: string, k = 5) =>
+    request<SearchHit[]>(`/restaurants/${rid}/knowledge/search`, {
+      method: "POST",
+      body: JSON.stringify({ query, k }),
     }),
 };

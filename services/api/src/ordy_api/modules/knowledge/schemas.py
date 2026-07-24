@@ -86,3 +86,18 @@ class CapabilityMapOut(BaseModel):
     version: int
     status: MapStatus
     map: dict
+
+
+class SearchRequest(BaseModel):
+    query: str = Field(min_length=1, max_length=500)
+    language: str | None = None
+    k: int = Field(default=5, ge=1, le=20)
+
+
+class SearchHit(BaseModel):
+    chunk_id: str
+    content: str
+    score: float
+    document_id: str | None
+    provenance: dict
+    language: str | None

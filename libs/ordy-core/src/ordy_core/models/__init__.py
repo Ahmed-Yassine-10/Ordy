@@ -11,6 +11,7 @@ from ordy_core.models.identity import (
 from ordy_core.models.knowledge import (
     CapabilityMap,
     IngestionRun,
+    KnowledgeChunk,
     KnowledgeDocument,
     KnowledgeSource,
 )
@@ -27,6 +28,7 @@ __all__ = [
     "ApiKey",
     "CapabilityMap",
     "IngestionRun",
+    "KnowledgeChunk",
     "KnowledgeDocument",
     "KnowledgeSource",
     "Menu",

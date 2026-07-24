@@ -4,7 +4,7 @@
 
 Ordy is an API-first, autonomous AI voice agent platform for restaurants. Customers hold natural voice conversations — in English, French, or Tunisian Derja — to order food, book tables, check availability, and get answers. Restaurants connect their website, database, POS, API, or repository; Ordy learns their menu, hours, and policies, then acts on their systems through a secure, audited tool-execution layer.
 
-> **Status: Phase 3 — Ingestion pipeline (in progress).** Phase 1 (architecture) is complete under [docs/](docs/). Phase 2 delivered auth, tenancy, and menu on **PostgreSQL Row-Level Security from the first migration** ([docs/PHASE-2.md](docs/PHASE-2.md)). Phase 3 adds the restaurant-intelligence pipeline — `ordy-ingest` (JSON-LD menu extraction, OpenAPI capability analysis, synthesis, change-detection), Celery workers, and a knowledge API + onboarding UI where a URL becomes a reviewed menu draft and capability map, published only on human approval ([docs/PHASE-3.md](docs/PHASE-3.md)).
+> **Status: Phase 4 — Knowledge base + RAG (in progress).** Phase 1 (architecture) is complete under [docs/](docs/). Phase 2 delivered auth, tenancy, and menu on **PostgreSQL Row-Level Security from the first migration** ([docs/PHASE-2.md](docs/PHASE-2.md)); Phase 3 the restaurant-intelligence pipeline (URL → reviewed menu draft + capability map, [docs/PHASE-3.md](docs/PHASE-3.md)). Phase 4 adds retrieval — `ordy-rag` (heading-aware chunking, embeddings behind a port, hybrid vector+FTS search with RRF fusion, grounding checks), `knowledge_chunks` on pgvector (HNSW), embed-at-publish (searchable iff approved), and a retrieval search API + debug UI with provenance ([docs/PHASE-4.md](docs/PHASE-4.md)).
 
 ## The one rule that shapes everything
 

@@ -25,6 +25,7 @@ from ordy_core.errors import NotFound, ValidationFailed
 from ordy_core.models import (
     CapabilityMap,
     IngestionRun,
+    KnowledgeChunk,
     KnowledgeDocument,
     KnowledgeSource,
     Menu,
@@ -36,7 +37,9 @@ from ordy_core.models import (
 from ordy_core.storage import LocalObjectStore
 from ordy_ingest.fetch import Fetcher, StaticFetcher
 from ordy_ingest.runner import execute_run
-from sqlalchemy import select
+from ordy_rag.chunk import chunk_markdown
+from ordy_rag.embed import Embedder
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ordy_api.config import Settings
@@ -158,6 +161,34 @@ async def _default_menu(session: AsyncSession, restaurant_id: uuid.UUID) -> Menu
     return menu
 
 
+async def _index_document(
+    session: AsyncSession, restaurant_id: uuid.UUID, doc: KnowledgeDocument, embedder: Embedder
+) -> None:
+    """Chunk + embed an approved document into knowledge_chunks. Runs in the SAME
+    transaction as the approval flip, so a chunk is searchable iff approved
+    (ADR-005/012). Re-publish replaces prior chunks for the document."""
+    await session.execute(delete(KnowledgeChunk).where(KnowledgeChunk.document_id == doc.id))
+    chunks = chunk_markdown(doc.content)
+    if not chunks:
+        return
+    vectors = embedder.embed([c.content for c in chunks])
+    provenance = {"source_url": doc.url, "doc_type": doc.doc_type.value}
+    for chunk, vector in zip(chunks, vectors, strict=False):
+        session.add(
+            KnowledgeChunk(
+                restaurant_id=restaurant_id,
+                document_id=doc.id,
+                chunk_index=chunk.index,
+                content=chunk.content,
+                token_count=chunk.token_count,
+                embedding=vector,
+                embedding_meta={"backend": type(embedder).__name__, "dim": embedder.dim},
+                language=doc.language,
+                meta={"headings": chunk.headings_path, "doc_type": doc.doc_type.value, "provenance": provenance},
+            )
+        )
+
+
 async def publish_review(
     session: AsyncSession,
     restaurant_id: uuid.UUID,
@@ -165,6 +196,7 @@ async def publish_review(
     payload: ReviewSubmit,
     *,
     user_id: uuid.UUID | None,
+    embedder: Embedder,
 ) -> PublishResult:
     run = await get_run(session, run_id)
     if run.status not in {RunStatus.AWAITING_REVIEW, RunStatus.PUBLISHED}:
@@ -230,6 +262,8 @@ async def publish_review(
             menu_doc.status = DocStatus.APPROVED
             menu_doc.approved_by = user_id
             menu_doc.approved_at = _now()
+            # Same transaction as approval → searchable iff approved.
+            await _index_document(session, restaurant_id, menu_doc, embedder)
 
     activated = False
     if payload.approve_capability_map:

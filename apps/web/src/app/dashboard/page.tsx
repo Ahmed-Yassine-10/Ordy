@@ -43,6 +43,12 @@ export default function DashboardPage() {
           >
             Onboard
           </a>
+          <a
+            href="/dashboard/knowledge"
+            className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-900"
+          >
+            Knowledge
+          </a>
           <button
             onClick={createDemo}
             className="rounded-lg bg-ordy-accent px-4 py-2 text-sm font-medium text-white hover:opacity-90"

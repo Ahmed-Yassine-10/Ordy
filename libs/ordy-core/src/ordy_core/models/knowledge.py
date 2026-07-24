@@ -10,6 +10,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 
+from pgvector.sqlalchemy import Vector
 from sqlalchemy import (
     ForeignKey,
     Integer,
@@ -20,6 +21,10 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID as PgUUID
 from sqlalchemy.orm import Mapped, mapped_column
+
+# Embedding dimensionality for the launch EMBEDDING tier. The concrete model + dim are
+# recorded per-row in ``embedding_meta`` so an index migration is possible (ADR-008).
+EMBEDDING_DIM = 1536
 
 from ordy_core.db.base import Base, TenantMixin, TimestampMixin, pk
 from ordy_core.enums import (
@@ -84,6 +89,29 @@ class KnowledgeDocument(Base, TenantMixin, TimestampMixin):
     draft: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)
     approved_by: Mapped[uuid.UUID | None] = mapped_column(PgUUID(as_uuid=True), ForeignKey("users.id"))
     approved_at: Mapped[datetime | None] = mapped_column()
+
+
+class KnowledgeChunk(Base, TenantMixin, TimestampMixin):
+    """A retrievable slice of an APPROVED document (doc 06 §3.5).
+
+    Rows exist only for approved knowledge — chunking + embedding happen in the same
+    transaction as the approval flip, so a chunk is searchable iff approved
+    (ADR-005/012). The ``fts`` generated column + HNSW index are created in migration
+    0003 (kept off the ORM to avoid loading the tsvector on entity reads)."""
+
+    __tablename__ = "knowledge_chunks"
+
+    id: Mapped[uuid.UUID] = pk()
+    document_id: Mapped[uuid.UUID] = mapped_column(
+        PgUUID(as_uuid=True), ForeignKey("knowledge_documents.id", ondelete="CASCADE"), nullable=False
+    )
+    chunk_index: Mapped[int] = mapped_column(Integer, nullable=False)
+    content: Mapped[str] = mapped_column(Text, nullable=False)
+    token_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    embedding: Mapped[list[float] | None] = mapped_column(Vector(EMBEDDING_DIM))
+    embedding_meta: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)
+    language: Mapped[str | None] = mapped_column(Text)
+    meta: Mapped[dict] = mapped_column("metadata", JSONB, default=dict, nullable=False)
 
 
 class CapabilityMap(Base, TenantMixin, TimestampMixin):

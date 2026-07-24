@@ -1,0 +1,21 @@
+[project]
+name = "ordy-rag"
+version = "0.1.0"
+description = "Ordy retrieval: chunking, embeddings (behind a port), hybrid search + RRF fusion, grounding."
+requires-python = ">=3.12"
+dependencies = [
+    "ordy-core",
+]
+
+# The real embedding backend (model router / OpenAI) is optional; a deterministic
+# HashingEmbedder + InMemoryVectorStore keep chunking, fusion, and retrieval testable
+# with only the standard library.
+[project.optional-dependencies]
+openai = ["openai>=1.40"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/ordy_rag"]

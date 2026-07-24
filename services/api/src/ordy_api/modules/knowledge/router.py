@@ -8,13 +8,17 @@ from ordy_core.enums import MemberRole
 
 from ordy_api.config import Settings, get_settings
 from ordy_api.deps import Scope, require_tenant
+from ordy_api.embedding import get_embedder
 from ordy_api.modules.knowledge import service
+from ordy_api.modules.knowledge.retrieval import hybrid_search
 from ordy_api.modules.knowledge.schemas import (
     CapabilityMapOut,
     PublishResult,
     ReviewData,
     ReviewSubmit,
     RunOut,
+    SearchHit,
+    SearchRequest,
     SourceCreate,
     SourceOut,
 )
@@ -83,7 +87,7 @@ async def submit_review(
     scope: Scope = Depends(require_tenant(MemberRole.MANAGER)),
 ) -> PublishResult:
     return await service.publish_review(
-        scope.session, _rid(scope), run_id, body, user_id=scope.principal.user_id
+        scope.session, _rid(scope), run_id, body, user_id=scope.principal.user_id, embedder=get_embedder()
     )
 
 
@@ -93,3 +97,13 @@ async def list_capability_maps(
 ) -> list[CapabilityMapOut]:
     maps = await service.list_capability_maps(scope.session, _rid(scope))
     return [CapabilityMapOut.model_validate(m, from_attributes=True) for m in maps]
+
+
+@router.post("/knowledge/search", response_model=list[SearchHit])
+async def knowledge_search(
+    body: SearchRequest, scope: Scope = Depends(require_tenant(MemberRole.VIEWER))
+) -> list[SearchHit]:
+    """Debug/inspection retrieval: hybrid search over approved chunks, with provenance
+    (doc 07 §2.3). The agent uses the same path internally from Phase 5."""
+    hits = await hybrid_search(scope.session, _rid(scope), body.query, get_embedder(), k=body.k)
+    return [SearchHit(**hit) for hit in hits]

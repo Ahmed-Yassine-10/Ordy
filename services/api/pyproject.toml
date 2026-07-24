@@ -7,6 +7,7 @@ dependencies = [
     "ordy-core",
     "ordy-security",
     "ordy-ingest[crawl]",       # pipeline + inline-dev fetching (httpx)
+    "ordy-rag",                 # chunking, embeddings, hybrid retrieval
     "fastapi>=0.115",
     "uvicorn[standard]>=0.30",
     "pydantic>=2.7",
@@ -23,6 +24,7 @@ dependencies = [
 ordy-core = { workspace = true }
 ordy-security = { workspace = true }
 ordy-ingest = { workspace = true }
+ordy-rag = { workspace = true }
 
 [build-system]
 requires = ["hatchling"]
