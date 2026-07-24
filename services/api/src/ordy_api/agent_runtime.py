@@ -5,11 +5,22 @@ from __future__ import annotations
 
 import uuid
 
+from datetime import UTC, datetime
+
 from ordy_agent.brain import RuleBasedBrain
 from ordy_agent.deps import AgentDeps, Retriever
 from ordy_agent.tools_runtime import ToolRuntime
 from ordy_core.enums import ProductStatus
-from ordy_core.models import Product, ProductVariant, Restaurant, RestaurantTool, ToolDefinition
+from ordy_core.models import (
+    DeliveryZoneRow,
+    OperatingHours,
+    Product,
+    ProductVariant,
+    Restaurant,
+    RestaurantTool,
+    ToolDefinition,
+)
+from ordy_orders.hours import HoursWindow, open_services
 from ordy_rag.models import RetrievedChunk
 from ordy_tools.policy import Caps, DeliveryPolicy, PolicyContext, ToolBinding
 from ordy_tools.pricing import ProductSnapshot, VariantSnapshot
@@ -110,12 +121,44 @@ async def build_policy_context(
         for p in products
     }
 
-    service_settings = settings.get("service_open") or {}
-    service_open = {
-        service: bool(service_settings.get(service, True))
-        for service in ("pickup", "delivery", "dine_in", "reservation")
-    }
-    delivery_settings = settings.get("delivery") or {}
+    # Real operating hours (Phase 7). With no windows configured the restaurant is
+    # treated as always open, so a tenant that hasn't set hours can still take orders.
+    hour_rows = list(
+        await session.scalars(select(OperatingHours).where(OperatingHours.restaurant_id == restaurant_id))
+    )
+    if hour_rows:
+        windows = [
+            HoursWindow(service=row.service.value, day_of_week=row.day_of_week, opens=row.opens, closes=row.closes)
+            for row in hour_rows
+        ]
+        service_open = open_services(
+            windows, at=datetime.now(UTC), timezone=(restaurant.timezone if restaurant else "Africa/Tunis")
+        )
+    else:
+        service_settings = settings.get("service_open") or {}
+        service_open = {
+            service: bool(service_settings.get(service, True))
+            for service in ("pickup", "delivery", "dine_in", "reservation")
+        }
+
+    # Delivery: without a customer address we can't match a zone, so the cheapest active
+    # zone's terms apply. Address-based matching happens when the order carries one.
+    zone_rows = list(
+        await session.scalars(
+            select(DeliveryZoneRow).where(
+                DeliveryZoneRow.restaurant_id == restaurant_id, DeliveryZoneRow.is_active.is_(True)
+            )
+        )
+    )
+    if zone_rows:
+        cheapest = min(zone_rows, key=lambda z: (z.fee_minor, z.min_order_minor))
+        delivery_settings = {
+            "in_zone": True,
+            "min_order_minor": cheapest.min_order_minor,
+            "fee_minor": cheapest.fee_minor,
+        }
+    else:
+        delivery_settings = settings.get("delivery") or {}
 
     return PolicyContext(
         channel=channel,

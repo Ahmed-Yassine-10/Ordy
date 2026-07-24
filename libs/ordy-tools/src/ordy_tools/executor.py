@@ -91,3 +91,49 @@ async def execute_action(
         adapter=adapter.name,
         executed_at=datetime.now(UTC),
     )
+
+
+async def compensate(
+    spec: ToolSpec, outcome: ActionOutcome, adapter: ExecutorAdapter, catalog: dict[str, ToolSpec]
+) -> ActionOutcome | None:
+    """Undo a succeeded step using the spec's declared compensation (doc 03 §3.5).
+
+    Returns None when the spec declares no compensation (nothing to undo).
+    """
+    if not spec.compensation or outcome.status is not ActionStatus.SUCCEEDED:
+        return None
+    comp_spec = catalog.get(spec.compensation.get("tool", ""))
+    if comp_spec is None:
+        return None
+    mapping = spec.compensation.get("args_from_output", {})
+    args = {arg: (outcome.output or {}).get(source) for arg, source in mapping.items()}
+    return await execute_action(comp_spec, args, adapter, idempotency_key=f"comp-{outcome.external_ref}")
+
+
+async def execute_plan(
+    steps: list[tuple[ToolSpec, dict]],
+    adapter: ExecutorAdapter,
+    catalog: dict[str, ToolSpec],
+    *,
+    idempotency_prefix: str = "plan",
+) -> list[ActionOutcome]:
+    """Execute a multi-step plan, compensating completed steps if a later one fails.
+
+    Keeps the restaurant's systems consistent: a half-applied plan is rolled back rather
+    than left dangling.
+    """
+    done: list[tuple[ToolSpec, ActionOutcome]] = []
+    outcomes: list[ActionOutcome] = []
+
+    for index, (spec, args) in enumerate(steps):
+        outcome = await execute_action(
+            spec, args, adapter, idempotency_key=f"{idempotency_prefix}-{index}"
+        )
+        outcomes.append(outcome)
+        if outcome.status is not ActionStatus.SUCCEEDED:
+            for prior_spec, prior_outcome in reversed(done):
+                await compensate(prior_spec, prior_outcome, adapter, catalog)
+            break
+        done.append((spec, outcome))
+
+    return outcomes

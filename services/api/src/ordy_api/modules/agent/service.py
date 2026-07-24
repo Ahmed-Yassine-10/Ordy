@@ -27,6 +27,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ordy_api.agent_runtime import build_deps, build_policy_context
+from ordy_api.modules.orders.adapter import DbNativeAdapter
 
 
 def _now() -> datetime:
@@ -128,7 +129,20 @@ async def post_turn(
         )
     )
 
-    runtime = ToolRuntime(context=await build_policy_context(session, restaurant_id, channel="sandbox"))
+    context = await build_policy_context(session, restaurant_id, channel="sandbox")
+    # Phase 7: confirmed actions now write REAL orders/reservations via the DB adapter.
+    runtime = ToolRuntime(
+        context=context,
+        executor=DbNativeAdapter(
+            session,
+            restaurant_id,
+            menu=context.menu,
+            currency=context.currency,
+            channel=Channel.SANDBOX,
+            conversation_id=conversation_id,
+            delivery_fee_minor=context.delivery.fee_minor,
+        ),
+    )
     deps = build_deps(session, restaurant_id, persona, tools=runtime)
     started = time.monotonic()
     result = await run_turn(state, deps)

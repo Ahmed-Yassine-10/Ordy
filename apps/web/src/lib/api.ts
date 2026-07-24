@@ -167,6 +167,15 @@ export const api = {
       body: JSON.stringify({ text }),
     }),
 
+  // --- operations (Phase 7) ---
+  listOrders: (rid: string, status?: string) =>
+    request<OrderRow[]>(`/restaurants/${rid}/orders${status ? `?status=${status}` : ""}`),
+  changeOrderStatus: (rid: string, orderId: string, status: string) =>
+    request<OrderRow>(`/restaurants/${rid}/orders/${orderId}/status`, {
+      method: "POST",
+      body: JSON.stringify({ status }),
+    }),
+
   // --- tools / action gate (Phase 6) ---
   listTools: (rid: string) => request<Tool[]>(`/restaurants/${rid}/tools`),
   updateTool: (rid: string, key: string, patch: Partial<Pick<Tool, "enabled" | "caps">>) =>
@@ -204,4 +213,18 @@ export interface TurnResponse {
   reply: string;
   trace: AgentTrace;
   status: string;
+}
+
+export interface OrderRow {
+  id: string;
+  status: string;
+  type: string;
+  channel: string;
+  total_minor: number;
+  currency: string;
+  tracking_token: string | null;
+  executed_via: string;
+  created_at: string;
+  next_states: string[];
+  items: { name: string; quantity: number; total_minor: number }[];
 }

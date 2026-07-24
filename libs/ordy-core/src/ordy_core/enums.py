@@ -157,6 +157,29 @@ class TurnRole(StrEnum):
     TOOL = "tool"
 
 
+class OrderStatus(StrEnum):
+    """Order lifecycle (doc 06 §3.3). Transitions are enforced in ordy-orders."""
+
+    DRAFT = "draft"
+    PENDING_CONFIRMATION = "pending_confirmation"
+    CONFIRMED = "confirmed"
+    PREPARING = "preparing"
+    READY = "ready"
+    OUT_FOR_DELIVERY = "out_for_delivery"
+    COMPLETED = "completed"
+    CANCELLED = "cancelled"
+    FAILED = "failed"
+
+
+class ReservationStatus(StrEnum):
+    PENDING_CONFIRMATION = "pending_confirmation"
+    CONFIRMED = "confirmed"
+    SEATED = "seated"
+    COMPLETED = "completed"
+    NO_SHOW = "no_show"
+    CANCELLED = "cancelled"
+
+
 class ActionStatus(StrEnum):
     """Action lifecycle (doc 03 §4.2). Every transition is audited."""
 

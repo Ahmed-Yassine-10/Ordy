@@ -9,6 +9,7 @@ dependencies = [
     "ordy-ingest[crawl]",       # pipeline + inline-dev fetching (httpx)
     "ordy-rag",                 # chunking, embeddings, hybrid retrieval
     "ordy-tools",               # action gate: ToolSpecs, policy engine, executors
+    "ordy-orders",              # order domain: state machine, hours, zones, totals
     "ordy-agent",               # conversational agent orchestrator
     "fastapi>=0.115",
     "uvicorn[standard]>=0.30",
@@ -28,6 +29,7 @@ ordy-security = { workspace = true }
 ordy-ingest = { workspace = true }
 ordy-rag = { workspace = true }
 ordy-tools = { workspace = true }
+ordy-orders = { workspace = true }
 ordy-agent = { workspace = true }
 
 [build-system]
