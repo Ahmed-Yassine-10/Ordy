@@ -4,7 +4,7 @@
 
 Ordy is an API-first, autonomous AI voice agent platform for restaurants. Customers hold natural voice conversations — in English, French, or Tunisian Derja — to order food, book tables, check availability, and get answers. Restaurants connect their website, database, POS, API, or repository; Ordy learns their menu, hours, and policies, then acts on their systems through a secure, audited tool-execution layer.
 
-> **Status: Phase 8 — Website automation (in progress).** Phases 1–7 complete: architecture ([docs/](docs/)), auth/tenancy on **RLS** ([2](docs/PHASE-2.md)), ingestion ([3](docs/PHASE-3.md)), knowledge/RAG ([4](docs/PHASE-4.md)), the agent ([5](docs/PHASE-5.md)), the deterministic **action gate** ([6](docs/PHASE-6.md)), and **real order execution** ([7](docs/PHASE-7.md)). Phase 8 adds browser automation for restaurants with no API — AI-generated, human-verified, **deterministically replayed** workflows in a hardened sandbox, with an **SSRF egress allowlist**, a hard refusal to ever type card details, submit gated on a platform-confirmed action, and a degrade chain that falls back to Ordy rather than losing orders. **97 tests pass** ([docs/PHASE-8.md](docs/PHASE-8.md)).
+> **Status: all 10 phases built — pre-GA.** Architecture through production IaC is in place: [1 architecture](docs/) · [2 auth/RLS](docs/PHASE-2.md) · [3 ingestion](docs/PHASE-3.md) · [4 knowledge/RAG](docs/PHASE-4.md) · [5 agent](docs/PHASE-5.md) · [6 action gate](docs/PHASE-6.md) · [7 order execution](docs/PHASE-7.md) · [8 web automation](docs/PHASE-8.md) · [9 security](docs/PHASE-9.md) · [10 deployment](docs/PHASE-10.md). **116 tests pass**, including a red-team suite where every attack is blocked by deterministic code rather than model refusal. What is *not* done is stated plainly in each phase doc and the [GA checklist](docs/PHASE-10.md#ga-checklist): the live voice audio loop, browser runs against real sites, the external penetration test, and the first `terraform apply`.
 
 ## The one rule that shapes everything
 
@@ -34,6 +34,22 @@ Every state-changing operation passes through a typed tool schema, a determinist
 | [08 — Security](docs/08-security.md) | Threat model, tenant isolation, AI safety controls, sandbox spec, GDPR/PCI posture |
 | [09 — Repository Structure](docs/09-repo-structure.md) | Monorepo layout, package boundaries, codegen, CI |
 | [10 — Roadmap](docs/10-roadmap.md) | 10 phases with deliverables, exit criteria, and de-risking spikes |
+| [SECURITY.md](SECURITY.md) | Posture, reporting, controls, and known gaps |
+| [Incident runbook](docs/runbooks/incident-response.md) | Severity levels, kill switches, playbooks |
+
+### Build progress
+
+| Phase | Doc | Highlights |
+|---|---|---|
+| 2 | [PHASE-2](docs/PHASE-2.md) | Auth, tenancy, menu — RLS from the first migration |
+| 3 | [PHASE-3](docs/PHASE-3.md) | Ingestion: URL → reviewed menu draft + capability map |
+| 4 | [PHASE-4](docs/PHASE-4.md) | pgvector RAG, hybrid search, embed-at-publish |
+| 5 | [PHASE-5](docs/PHASE-5.md) | Agent brain, grounded Q&A, text sandbox, voice scaffold |
+| 6 | [PHASE-6](docs/PHASE-6.md) | **The action gate** + 21-test red-team suite |
+| 7 | [PHASE-7](docs/PHASE-7.md) | Real orders, fallback, compensation, conformance |
+| 8 | [PHASE-8](docs/PHASE-8.md) | Sandboxed browser automation, SSRF + payment guards |
+| 9 | [PHASE-9](docs/PHASE-9.md) | Redaction, DSR erasure, rate limits, cost breakers, vault |
+| 10 | [PHASE-10](docs/PHASE-10.md) | K8s, Terraform, deploy pipeline, SLOs, GA checklist |
 
 ## Stack at a glance
 

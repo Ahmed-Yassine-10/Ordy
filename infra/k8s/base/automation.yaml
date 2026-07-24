@@ -1,0 +1,80 @@
+# Automation sandbox — the highest-risk component (doc 08 §5). It executes against
+# arbitrary third-party sites, so it gets its own node pool, a sandboxed runtime, and a
+# default-deny NetworkPolicy. The in-process guards in ordy-automation enforce the same
+# rules; this is the independent second layer.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ordy-automation
+  labels: { app: ordy-automation }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: ordy-automation } }
+  template:
+    metadata:
+      labels: { app: ordy-automation }
+    spec:
+      # gVisor/Kata where the cluster supports it — syscall isolation for browser code.
+      runtimeClassName: gvisor
+      nodeSelector: { ordy.ai/pool: automation }
+      tolerations:
+        - key: ordy.ai/automation
+          operator: Exists
+          effect: NoSchedule
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        seccompProfile: { type: RuntimeDefault }
+      containers:
+        - name: sandbox
+          image: ghcr.io/ordy/automation:latest
+          # NOTE: no ordy-secrets here — the sandbox never holds database credentials.
+          envFrom:
+            - configMapRef: { name: ordy-automation-config }
+          resources:
+            requests: { cpu: 500m, memory: 1Gi }
+            limits: { cpu: "2", memory: 2Gi }
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: ["ALL"] }
+          volumeMounts:
+            - { name: scratch, mountPath: /tmp }
+            - { name: browser-profile, mountPath: /home/sandbox }
+      volumes:
+        - name: scratch
+          emptyDir: { medium: Memory, sizeLimit: 512Mi }
+        - name: browser-profile
+          emptyDir: { medium: Memory, sizeLimit: 256Mi }
+---
+# Default-deny egress. Only DNS and public HTTPS leave; cluster services, RFC1918, and the
+# cloud metadata endpoint are unreachable. Per-run domain allow-listing is enforced in the
+# runner itself (ordy_automation.safety).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ordy-automation-egress
+spec:
+  podSelector: { matchLabels: { app: ordy-automation } }
+  policyTypes: ["Egress", "Ingress"]
+  ingress: []            # nothing may dial into the sandbox
+  egress:
+    - to:
+        - namespaceSelector: { matchLabels: { kubernetes.io/metadata.name: kube-system } }
+          podSelector: { matchLabels: { k8s-app: kube-dns } }
+      ports:
+        - { protocol: UDP, port: 53 }
+        - { protocol: TCP, port: 53 }
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 169.254.0.0/16   # cloud metadata + link-local
+              - 10.0.0.0/8       # RFC1918
+              - 172.16.0.0/12
+              - 192.168.0.0/16
+              - 127.0.0.0/8      # loopback
+      ports:
+        - { protocol: TCP, port: 443 }
+        - { protocol: TCP, port: 80 }

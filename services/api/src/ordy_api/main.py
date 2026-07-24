@@ -19,6 +19,7 @@ from ordy_api.modules import (
     knowledge,
     menu,
     orders,
+    privacy,
     restaurants,
     tools,
     workflows,
@@ -67,6 +68,7 @@ def create_app() -> FastAPI:
     app.include_router(orders.router, prefix="/v1")
     app.include_router(orders.public_router, prefix="/v1")
     app.include_router(workflows.router, prefix="/v1")
+    app.include_router(privacy.router, prefix="/v1")
 
     return app
 

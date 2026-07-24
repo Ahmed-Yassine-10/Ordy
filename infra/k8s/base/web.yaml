@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ordy-web
+  labels: { app: ordy-web }
+spec:
+  replicas: 2
+  selector: { matchLabels: { app: ordy-web } }
+  template:
+    metadata:
+      labels: { app: ordy-web }
+    spec:
+      securityContext: { runAsNonRoot: true, runAsUser: 10001 }
+      containers:
+        - name: web
+          image: ghcr.io/ordy/web:latest
+          ports: [{ containerPort: 3000 }]
+          envFrom: [{ configMapRef: { name: ordy-config } }]
+          resources:
+            requests: { cpu: 100m, memory: 256Mi }
+            limits: { cpu: 500m, memory: 512Mi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ordy-web
+spec:
+  selector: { app: ordy-web }
+  ports: [{ port: 80, targetPort: 3000 }]

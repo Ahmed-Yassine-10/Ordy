@@ -6,6 +6,7 @@ requires-python = ">=3.12"
 dependencies = [
     "ordy-core",
     "ordy-ingest[crawl]",
+    "ordy-security",
     "celery[redis]>=5.4",
     "pydantic-settings>=2.3",
     "boto3>=1.34",

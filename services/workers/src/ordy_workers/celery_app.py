@@ -12,7 +12,7 @@ celery_app = Celery(
     "ordy",
     broker=_settings.redis_url,
     backend=_settings.redis_url,
-    include=["ordy_workers.ingestion.tasks"],
+    include=["ordy_workers.ingestion.tasks", "ordy_workers.retention"],
 )
 
 celery_app.conf.update(
@@ -21,6 +21,7 @@ celery_app.conf.update(
         "ordy.ingestion.*": {"queue": "ingestion"},
         "ordy.embeddings.*": {"queue": "embeddings"},
         "ordy.webhooks.*": {"queue": "webhooks"},
+        "ordy.retention.*": {"queue": "maintenance"},
     },
     task_acks_late=True,
     worker_prefetch_multiplier=1,
@@ -34,5 +35,9 @@ celery_app.conf.beat_schedule = {
     "resync-due-sources": {
         "task": "ordy.ingestion.enqueue_due_resyncs",
         "schedule": 3600.0,  # hourly sweep; per-source cron honored inside
+    },
+    "enforce-retention": {
+        "task": "ordy.retention.enforce",
+        "schedule": 86400.0,  # nightly (doc 06 §5)
     },
 }

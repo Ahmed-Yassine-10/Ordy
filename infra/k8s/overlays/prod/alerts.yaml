@@ -1,0 +1,54 @@
+# SLO alerting (doc 01 §6). These are the numbers we promised; alert when we're burning
+# the error budget, not on every blip.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: ordy-slo
+  labels: { role: alert-rules }
+spec:
+  groups:
+    - name: ordy.slo
+      rules:
+        - alert: VoiceLatencyBudgetBurn
+          # Promise: p50 <= 800ms, p95 <= 1500ms voice-to-voice.
+          expr: histogram_quantile(0.95, sum(rate(ordy_voice_turn_latency_seconds_bucket[10m])) by (le)) > 1.5
+          for: 10m
+          labels: { severity: page }
+          annotations:
+            summary: "Voice p95 latency above 1.5s"
+            runbook: "docs/runbooks/incident-response.md"
+
+        - alert: ApiAvailabilityBurn
+          expr: |
+            sum(rate(http_requests_total{job="ordy-api",status=~"5.."}[5m]))
+            / sum(rate(http_requests_total{job="ordy-api"}[5m])) > 0.01
+          for: 5m
+          labels: { severity: page }
+          annotations: { summary: "API 5xx rate above 1%" }
+
+        - alert: ActionFailureRateHigh
+          # Orders failing to reach restaurants is the business-critical signal.
+          expr: |
+            sum(rate(ordy_action_executions_total{status="failed"}[15m]))
+            / sum(rate(ordy_action_executions_total[15m])) > 0.05
+          for: 15m
+          labels: { severity: page }
+          annotations: { summary: "Action failure rate above 5% — check adapters and fallbacks" }
+
+        - alert: VendorSpendAnomaly
+          expr: sum(rate(ordy_vendor_cost_minor_total[1h])) > 500000
+          for: 10m
+          labels: { severity: page }
+          annotations: { summary: "Vendor spend above budget — cost breaker may be tripping" }
+
+        - alert: AutomationWorkflowsDegraded
+          expr: sum(ordy_automation_workflows{status="degraded"}) > 0
+          for: 30m
+          labels: { severity: ticket }
+          annotations: { summary: "Browser workflows degraded — sites likely changed" }
+
+        - alert: IngestionReviewBacklog
+          expr: sum(ordy_ingestion_runs{status="awaiting_review"}) > 20
+          for: 2h
+          labels: { severity: ticket }
+          annotations: { summary: "Menu review backlog building up" }

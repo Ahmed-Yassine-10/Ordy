@@ -1,0 +1,16 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: ordy-prod
+resources:
+  - ../../base
+  - alerts.yaml
+replicas:
+  - { name: ordy-api, count: 4 }
+  - { name: ordy-voice, count: 3 }
+  - { name: ordy-workers, count: 3 }
+images:
+  - { name: ghcr.io/ordy/api, newTag: PLACEHOLDER_SHA }
+  - { name: ghcr.io/ordy/voice, newTag: PLACEHOLDER_SHA }
+  - { name: ghcr.io/ordy/workers, newTag: PLACEHOLDER_SHA }
+  - { name: ghcr.io/ordy/automation, newTag: PLACEHOLDER_SHA }
+  - { name: ghcr.io/ordy/web, newTag: PLACEHOLDER_SHA }

@@ -1,0 +1,113 @@
+name: deploy
+
+# Build once, promote the same immutable digest through staging → prod. Migrations run
+# as a pre-deploy job using expand-migrate-contract, so a rollback never needs a
+# down-migration (doc 01 §6).
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Target environment
+        type: choice
+        options: [staging, prod]
+        default: staging
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  REGISTRY: ghcr.io/${{ github.repository_owner }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions: { contents: read, packages: write }
+    strategy:
+      matrix:
+        service: [api, voice, workers, automation, web]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: infra/docker/${{ matrix.service }}.Dockerfile
+          push: true
+          tags: ${{ env.REGISTRY }}/ordy-${{ matrix.service }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  scan:
+    needs: build
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [api, voice, workers, automation, web]
+    steps:
+      - name: Scan image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.REGISTRY }}/ordy-${{ matrix.service }}:${{ github.sha }}
+          severity: CRITICAL,HIGH
+          exit-code: "1"   # a vulnerable image never reaches a cluster
+
+  migrate:
+    needs: scan
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment || 'staging' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+      - run: uv sync --package ordy-api
+      - name: Run migrations (forward-only)
+        working-directory: services/api
+        env:
+          DATABASE_MIGRATION_URL: ${{ secrets.DATABASE_MIGRATION_URL }}
+        run: uv run alembic upgrade head
+
+  deploy:
+    needs: migrate
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment || 'staging' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/setup-kubectl@v4
+      - name: Pin image digests and apply
+        run: |
+          cd infra/k8s/overlays/${{ inputs.environment || 'staging' }}
+          kustomize edit set image \
+            ghcr.io/ordy/api=${{ env.REGISTRY }}/ordy-api:${{ github.sha }} \
+            ghcr.io/ordy/voice=${{ env.REGISTRY }}/ordy-voice:${{ github.sha }} \
+            ghcr.io/ordy/workers=${{ env.REGISTRY }}/ordy-workers:${{ github.sha }} \
+            ghcr.io/ordy/automation=${{ env.REGISTRY }}/ordy-automation:${{ github.sha }} \
+            ghcr.io/ordy/web=${{ env.REGISTRY }}/ordy-web:${{ github.sha }}
+          kubectl apply -k .
+      - name: Wait for rollout
+        run: |
+          for deployment in ordy-api ordy-voice ordy-workers ordy-web; do
+            kubectl rollout status deployment/$deployment --timeout=10m
+          done
+      - name: Smoke test
+        run: curl -fsS "${{ vars.PUBLIC_URL }}/health/ready"
+
+  rollback-on-failure:
+    needs: deploy
+    if: failure()
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment || 'staging' }}
+    steps:
+      - uses: azure/setup-kubectl@v4
+      - name: Roll back deployments
+        run: |
+          for deployment in ordy-api ordy-voice ordy-workers ordy-web; do
+            kubectl rollout undo deployment/$deployment || true
+          done
