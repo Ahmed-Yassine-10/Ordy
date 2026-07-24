@@ -155,3 +155,18 @@ class TurnRole(StrEnum):
     AGENT = "agent"
     SYSTEM = "system"
     TOOL = "tool"
+
+
+class ActionStatus(StrEnum):
+    """Action lifecycle (doc 03 §4.2). Every transition is audited."""
+
+    PROPOSED = "proposed"
+    REJECTED = "rejected"
+    AWAITING_CONFIRMATION = "awaiting_confirmation"
+    DECLINED = "declined"
+    EXPIRED = "expired"
+    EXECUTING = "executing"
+    SUCCEEDED = "succeeded"
+    FAILED = "failed"
+    COMPENSATING = "compensating"
+    COMPENSATED = "compensated"

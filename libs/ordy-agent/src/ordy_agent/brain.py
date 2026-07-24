@@ -12,12 +12,20 @@ from dataclasses import dataclass
 from typing import Protocol
 
 from ordy_rag.models import RetrievedChunk
+from ordy_tools.models import ActionPlan, PlanStep
+from ordy_tools.pricing import ProductSnapshot
 
 from ordy_agent.router import ModelRouter, ModelTier
 from ordy_agent.state import ConversationState, Intent
 
 _GREETINGS = ("hello", "hi ", "hey", "bonjour", "salut", "aslema", "ahla", "أهلا", "سلام")
 _HANDOFF = ("human", "manager", "someone", "a person", "waiter", "staff", "real person", "بشر")
+_ORDER_PHRASES = (
+    "i want", "i'd like", "i would like", "give me", "can i get", "i'll take", "order",
+    "je veux", "je voudrais", "donne moi", "nheb", "commande", "نحب",
+)
+_PRICE_QUESTIONS = ("how much", "price", "prix", "combien", "قداش")
+_NUMBER_WORDS = {"one": 1, "two": 2, "three": 3, "four": 4, "un": 1, "deux": 2, "trois": 3}
 _INQUIRE_HINTS = (
     "?", "how much", "price", "prix", "combien", "قداش", "menu", "have", "do you",
     "vegetarian", "végétarien", "vegan", "halal", "allerg", "hours", "open", "close",
@@ -31,6 +39,7 @@ class AgentBrain(Protocol):
         self, question: str, chunks: list[RetrievedChunk], persona: dict, language: str
     ) -> str: ...
     async def smalltalk(self, state: ConversationState, persona: dict, language: str) -> str: ...
+    async def plan_actions(self, text: str, menu: dict[str, ProductSnapshot]) -> ActionPlan: ...
 
 
 class RuleBasedBrain:
@@ -41,11 +50,46 @@ class RuleBasedBrain:
         t = (text or "").lower()
         if any(h in t for h in _HANDOFF):
             return Intent.HANDOFF
+        # "I want a large pepperoni" is an order; "how much is a pepperoni" is a question.
+        if any(p in t for p in _ORDER_PHRASES) and not any(q in t for q in _PRICE_QUESTIONS):
+            return Intent.ORDER
         if any(h in t for h in _INQUIRE_HINTS):
             return Intent.INQUIRE
         if any(t.strip().startswith(g.strip()) or f" {g.strip()} " in f" {t} " for g in _GREETINGS):
             return Intent.SMALLTALK
         return Intent.INQUIRE  # default to trying to help
+
+    async def plan_actions(self, text: str, menu: dict[str, ProductSnapshot]) -> ActionPlan:
+        """Match menu items named in the utterance. Deliberately conservative: an
+        unresolved size is left empty so the gate asks (VARIANT_REQUIRED) rather than
+        the brain guessing."""
+        t = (text or "").lower()
+        quantity = _extract_quantity(t)
+        order_type = "delivery" if ("deliver" in t or "livraison" in t) else "pickup"
+
+        items: list[dict] = []
+        for product_id, product in menu.items():
+            words = [w for w in re.findall(r"[a-z]+", product.name.lower()) if len(w) > 3]
+            if not words or not any(w in t for w in words):
+                continue
+            item: dict = {"product_id": product_id, "quantity": quantity}
+            for variant_id, variant in product.variants.items():
+                if variant.name.lower() in t:
+                    item["variant_id"] = variant_id
+                    break
+            items.append(item)
+
+        if not items:
+            return ActionPlan(steps=[])
+        return ActionPlan(
+            steps=[
+                PlanStep(
+                    tool="create_order",
+                    args={"type": order_type, "items": items},
+                    reason="customer asked to order these items",
+                )
+            ]
+        )
 
     async def answer_from_knowledge(
         self, question: str, chunks: list[RetrievedChunk], persona: dict, language: str
@@ -71,6 +115,16 @@ class RuleBasedBrain:
             en="Welcome! I can help with our menu, hours, and orders. What would you like?",
             fr="Bienvenue ! Je peux vous renseigner sur le menu, les horaires et les commandes. Que puis-je faire ?",
         )
+
+
+def _extract_quantity(text: str) -> int:
+    match = re.search(r"\b(\d{1,3})\b", text)
+    if match:
+        return int(match.group(1))
+    for word, value in _NUMBER_WORDS.items():
+        if re.search(rf"\b{word}\b", text):
+            return value
+    return 1
 
 
 def _clean(text: str) -> str:
@@ -140,3 +194,8 @@ class LLMBrain:
 
         messages = smalltalk_prompt(state, persona, language)
         return await self.llm.complete(messages, model=self.router.model_for(ModelTier.CONVERSATION))
+
+    async def plan_actions(self, text: str, menu: dict[str, ProductSnapshot]) -> ActionPlan:
+        """Structured-output planning on the PLANNING tier. Whatever it returns is still
+        subject to the full deterministic gate — the planner has no authority."""
+        raise NotImplementedError("structured planning lands with the model-router client")

@@ -41,6 +41,9 @@ class ConversationState:
     retrieval_context: list[RetrievedChunk] = field(default_factory=list)
     facts_established: list[str] = field(default_factory=list)
     status: str = "active"  # active | escalated | completed
+    # Serialized ConfirmationRequest awaiting the customer's yes/no (doc 03 §4.2).
+    # Kept as a dict so it survives persistence + state rebuild between turns.
+    pending_confirmation: dict | None = None
 
     def last_user(self) -> str | None:
         for turn in reversed(self.turns):

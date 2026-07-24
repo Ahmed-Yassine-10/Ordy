@@ -20,6 +20,11 @@ from ordy_core.models.knowledge import (
     KnowledgeDocument,
     KnowledgeSource,
 )
+from ordy_core.models.tools import (
+    ActionExecution,
+    RestaurantTool,
+    ToolDefinition,
+)
 from ordy_core.models.menu import (
     MenuCategory,
     Menu,
@@ -30,6 +35,7 @@ from ordy_core.models.menu import (
 )
 
 __all__ = [
+    "ActionExecution",
     "AgentConfig",
     "ApiKey",
     "CapabilityMap",
@@ -49,5 +55,7 @@ __all__ = [
     "RefreshToken",
     "Restaurant",
     "RestaurantMember",
+    "RestaurantTool",
+    "ToolDefinition",
     "User",
 ]

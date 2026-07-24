@@ -6,6 +6,7 @@ requires-python = ">=3.12"
 dependencies = [
     "ordy-core",
     "ordy-rag",
+    "ordy-tools",
 ]
 
 # The LangGraph runtime (durable checkpointing + interrupts, primary from Phase 6) and
@@ -21,3 +22,8 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/ordy_agent"]
+
+[tool.uv.sources]
+ordy-core = { workspace = true }
+ordy-rag = { workspace = true }
+ordy-tools = { workspace = true }

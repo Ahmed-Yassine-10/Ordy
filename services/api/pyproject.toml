@@ -8,6 +8,7 @@ dependencies = [
     "ordy-security",
     "ordy-ingest[crawl]",       # pipeline + inline-dev fetching (httpx)
     "ordy-rag",                 # chunking, embeddings, hybrid retrieval
+    "ordy-tools",               # action gate: ToolSpecs, policy engine, executors
     "ordy-agent",               # conversational agent orchestrator
     "fastapi>=0.115",
     "uvicorn[standard]>=0.30",
@@ -26,6 +27,7 @@ ordy-core = { workspace = true }
 ordy-security = { workspace = true }
 ordy-ingest = { workspace = true }
 ordy-rag = { workspace = true }
+ordy-tools = { workspace = true }
 ordy-agent = { workspace = true }
 
 [build-system]

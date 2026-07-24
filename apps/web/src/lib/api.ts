@@ -166,7 +166,27 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ text }),
     }),
+
+  // --- tools / action gate (Phase 6) ---
+  listTools: (rid: string) => request<Tool[]>(`/restaurants/${rid}/tools`),
+  updateTool: (rid: string, key: string, patch: Partial<Pick<Tool, "enabled" | "caps">>) =>
+    request<Tool>(`/restaurants/${rid}/tools/${key}`, {
+      method: "PUT",
+      body: JSON.stringify(patch),
+    }),
 };
+
+export interface Tool {
+  key: string;
+  title: string;
+  description: string;
+  risk: "read" | "write" | "financial";
+  requires_confirmation: boolean;
+  enabled: boolean;
+  adapter: string;
+  channels: string[];
+  caps: Record<string, number>;
+}
 
 export interface SandboxRef {
   conversation_id: string;
