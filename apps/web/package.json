@@ -11,7 +11,7 @@
     "gen:sdk": "echo 'SDK codegen wired in Phase 2.x (openapi-typescript from /openapi.json)'"
   },
   "dependencies": {
-    "next": "14.2.5",
+    "next": "14.2.35",
     "react": "18.3.1",
     "react-dom": "18.3.1"
   },

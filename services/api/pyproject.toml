@@ -14,7 +14,7 @@ dependencies = [
     "ordy-agent",               # conversational agent orchestrator
     "fastapi>=0.115",
     "uvicorn[standard]>=0.30",
-    "pydantic>=2.7",
+    "pydantic[email]>=2.7",   # EmailStr needs email-validator
     "pydantic-settings>=2.3",
     "sqlalchemy[asyncio]>=2.0.30",
     "asyncpg>=0.29",
