@@ -1,0 +1,44 @@
+{
+  "name": "ordy-analyze",
+  "version": "0.1.0",
+  "description": "One-command onboarding for Ordy: analyze a restaurant project (routes + ORM) and emit a Capability Map the owner approves.",
+  "keywords": [
+    "ordy",
+    "restaurant",
+    "ai-agent",
+    "onboarding",
+    "capability-map",
+    "express",
+    "prisma",
+    "codegen"
+  ],
+  "homepage": "https://github.com/Ahmed-Yassine-10/Ordy/tree/main/tools/ordy-analyze#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ahmed-Yassine-10/Ordy.git",
+    "directory": "tools/ordy-analyze"
+  },
+  "bugs": {
+    "url": "https://github.com/Ahmed-Yassine-10/Ordy/issues"
+  },
+  "license": "UNLICENSED",
+  "type": "commonjs",
+  "bin": {
+    "ordy-analyze": "bin/ordy-analyze.js"
+  },
+  "files": [
+    "bin",
+    "src",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "node --test test/analyze.test.js",
+    "prepublishOnly": "node --test test/analyze.test.js"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
